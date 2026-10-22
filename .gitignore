@@ -1,0 +1,17 @@
+# бинарники Go
+/trd
+/touchrudder
+*.exe
+
+# артефакты IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# локальные данные узла
+/var/
+*.log
