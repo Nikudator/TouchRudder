@@ -15,3 +15,5 @@ Thumbs.db
 # локальные данные узла
 /var/
 *.log
+
+coverage.out
