@@ -5,34 +5,6 @@ import (
 	"testing"
 )
 
-func TestPeerID_Validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		peerID  PeerID
-		wantErr bool
-	}{
-		{
-			name:    "valid peer id",
-			peerID:  "some-valid-libp2p-id",
-			wantErr: false,
-		},
-		{
-			name:    "empty peer id",
-			peerID:  "",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.peerID.Validate()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PeerID.Validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestChunkAndShardID_Validate(t *testing.T) {
 	validHex64 := strings.Repeat("a", 64)
 

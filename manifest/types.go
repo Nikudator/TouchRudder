@@ -6,18 +6,6 @@ import (
 	"fmt"
 )
 
-// PeerID — идентификатор узла в сети TouchRudder.
-// Формат уточняется при интеграции libp2p (неделя 4); сейчас — непустая строка.
-type PeerID string
-
-// Validate проверяет, что PeerID не пуст.
-func (p PeerID) Validate() error {
-	if p == "" {
-		return errors.New("peer_id: empty")
-	}
-	return nil
-}
-
 // ChunkID — идентификатор чанка: SHA256, 32 байта в hex (64 символа).
 type ChunkID string
 
