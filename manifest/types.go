@@ -10,6 +10,7 @@ const (
 	BlockSize    int64 = 4096
 	GCMTagSize   int64 = 16
 	MaxChunkSize int64 = 8 * 1024 * 1024 // 8 МиБ
+	MaxShards          = 32
 )
 
 // ChunkID — идентификатор чанка: SHA256, 32 байта в hex (64 символа).
@@ -102,23 +103,24 @@ func (c CodecSpec) Validate() error {
 	if c.ParityShards <= 0 {
 		return fmt.Errorf("parity_shards must be greater than 0, got %d", c.ParityShards)
 	}
-	if c.DataShards+c.ParityShards > 32 {
-		return fmt.Errorf("data_shards + parity_shards = %d, exceeds max 32", c.DataShards+c.ParityShards)
+	if c.DataShards+c.ParityShards > MaxShards {
+		return fmt.Errorf("data_shards + parity_shards = %d, exceeds %d", c.DataShards+c.ParityShards, MaxShards)
 	}
-	if c.BlockSize != 4096 {
-		return fmt.Errorf("block_size must be 4096, got %d", c.BlockSize)
+	if c.BlockSize != BlockSize {
+		return fmt.Errorf("block_size must be %d, got %d", BlockSize, c.BlockSize)
 	}
-	if c.OriginalSize < 0 || c.OriginalSize > 8*1024*1024 {
-		return fmt.Errorf("original_size must be greater than 0 but not must be greater than 8Mib, got %d", c.OriginalSize)
+	if c.OriginalSize < 0 || c.OriginalSize > MaxChunkSize {
+		return fmt.Errorf("original_size must be in [0, %d], got %d", MaxChunkSize, c.OriginalSize)
 	}
-	if c.CiphertextSize != c.OriginalSize+16 {
-		return fmt.Errorf("ciphertext_size must be original_size + 16, got %d", c.CiphertextSize)
+	if c.CiphertextSize != c.OriginalSize+GCMTagSize {
+		return fmt.Errorf("ciphertext_size must be original_size + GCMTagSize, got %d", c.CiphertextSize)
 	}
 	if c.EncodedSize < c.CiphertextSize {
 		return fmt.Errorf("encoded_size must be >= ciphertext_size, got %d < %d", c.EncodedSize, c.CiphertextSize)
 	}
-	if c.EncodedSize%(int64(c.DataShards)*c.BlockSize) != 0 {
-		return fmt.Errorf("encoded_size / (data_shards * block_size) must be zero, got %d", c.EncodedSize%(int64(c.DataShards)*c.BlockSize))
+	if r := c.EncodedSize % (int64(c.DataShards) * BlockSize); r != 0 {
+		return fmt.Errorf("encoded_size %d must be a multiple of data_shards*block_size (=%d), remainder %d",
+			c.EncodedSize, int64(c.DataShards)*BlockSize, r)
 	}
 	return nil
 }

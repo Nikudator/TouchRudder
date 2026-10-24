@@ -183,3 +183,215 @@ func TestCipherSpec_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestCodecSpec_Validate(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		spec    CodecSpec
+		wantErr bool
+	}{
+		{
+			name: "valid_empty",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   0,
+				CiphertextSize: 16,
+				EncodedSize:    paddedSize(16, 4, 4096),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid_1mib",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid_1mib_plus_1",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: false,
+		},
+		{
+			name: "wrong algorithm",
+			spec: CodecSpec{
+				Algorithm:      "rs",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "data_shards_zero",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "parity_shards_zero",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "too_many_shards",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "wrong_block_size",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "negative_original",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "original_too_large",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "ciphertext_wrong_plus",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "ciphertext_wrong_minus",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "encoded_less_than_ciphertext",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+		{
+			name: "encoded_not_aligned",
+			spec: CodecSpec{
+				Algorithm:      "reed-solomon",
+				DataShards:     4,
+				ParityShards:   3,
+				BlockSize:      4096,
+				OriginalSize:   1048576,
+				CiphertextSize: 1048592,
+				EncodedSize:    1064960,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.spec.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// paddedSize returns ceil(ciphertext / (D*BS)) * (D*BS).
+// Independent implementation of spec §5.5 — not shared with production code,
+// so a bug in Validate's divisibility check can't hide here.
+func paddedSize(ciphertext int64, dataShards int, blockSize int64) int64 {
+	unit := int64(dataShards) * blockSize
+	if r := ciphertext % unit; r != 0 {
+		return ciphertext + (unit - r)
+	}
+	return ciphertext
+}
