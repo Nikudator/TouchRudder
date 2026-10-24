@@ -109,3 +109,105 @@ func TestChunkAndShardID_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestCipherSpec_Validate(t *testing.T) {
+	validKey := make(HexBytes, 32)
+	validNonce := make(HexBytes, 12)
+
+	tests := []struct {
+		name    string
+		spec    CipherSpec
+		wantErr bool
+	}{
+		{
+			name: "valid",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     validKey,
+				Nonce:     validNonce,
+			},
+			wantErr: false,
+		},
+		{
+			name: "wrong algorithm",
+			spec: CipherSpec{
+				Algorithm: "chacha20-poly1305",
+				KeyID:     validKey,
+				Nonce:     validNonce,
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty algorithm",
+			spec: CipherSpec{
+				Algorithm: "",
+				KeyID:     validKey,
+				Nonce:     validNonce,
+			},
+			wantErr: true,
+		},
+		{
+			name: "short KeyID",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     validKey[1:],
+				Nonce:     validNonce,
+			},
+			wantErr: true,
+		},
+		{
+			name: "long KeyID",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     append(validKey, 0x00),
+				Nonce:     validNonce,
+			},
+			wantErr: true,
+		},
+		{
+			name: "nil KeyID",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     nil,
+				Nonce:     validNonce,
+			},
+			wantErr: true,
+		},
+		{
+			name: "short Nonce",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     validKey,
+				Nonce:     validNonce[1:],
+			},
+			wantErr: true,
+		},
+		{
+			name: "long Nonce",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     validKey,
+				Nonce:     append(validNonce, 0x00),
+			},
+			wantErr: true,
+		},
+		{
+			name: "nil Nonce",
+			spec: CipherSpec{
+				Algorithm: "AES-256-GCM",
+				KeyID:     validKey,
+				Nonce:     nil,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.spec.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

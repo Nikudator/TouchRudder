@@ -53,3 +53,37 @@ func validateHex64(s string) error {
 	}
 	return nil
 }
+
+// CipherSpec описывает шифрование чанка.
+// Параметры FROZEN: попадают в манифест, используются при restore
+// вместо значений из конфига (§13.7).
+//
+// Note on spec notation: §10.1 shows "<hex 32>" for key_id and "<hex 24>"
+// for nonce, but the notation is ambiguous (bytes vs hex chars).
+// Interpreted as bytes, consistent with §5.1:
+//   - key_id = SHA256 output = 32 bytes
+//   - nonce  = AES-GCM nonce  = 12 bytes (§5.1)
+//
+// Logged as spec ambiguity; see issue #<N>.
+type CipherSpec struct {
+	Algorithm string   `json:"algorithm"`
+	KeyID     HexBytes `json:"key_id"`
+	Nonce     HexBytes `json:"nonce"`
+}
+
+// Validate проверяет поля CipherSpec.
+// Проверяется только длина: hex-валидность уже гарантирована
+// HexBytes.UnmarshalJSON. Повторная проверка hex здесь — дублирование
+// инварианта.
+func (c CipherSpec) Validate() error {
+	if c.Algorithm != "AES-256-GCM" {
+		return fmt.Errorf("algorithm %q, want AES-256-GCM", c.Algorithm)
+	}
+	if len(c.KeyID) != 32 {
+		return fmt.Errorf("key_id: length %d, want 32", len(c.KeyID))
+	}
+	if len(c.Nonce) != 12 {
+		return fmt.Errorf("nonce: length %d, want 12", len(c.Nonce))
+	}
+	return nil
+}

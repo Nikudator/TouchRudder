@@ -10,6 +10,8 @@ import (
 // HexBytes — байтовый срез, сериализуемый в JSON как hex-строка.
 type HexBytes []byte
 
+var nullJSON = []byte("null")
+
 func (h HexBytes) MarshalJSON() ([]byte, error) {
 
 	if h == nil {
@@ -21,7 +23,8 @@ func (h HexBytes) MarshalJSON() ([]byte, error) {
 }
 
 func (h *HexBytes) UnmarshalJSON(data []byte) error {
-	if bytes.Equal(data, []byte("null")) {
+
+	if bytes.Equal(data, nullJSON) {
 		*h = nil
 		return nil
 	}
