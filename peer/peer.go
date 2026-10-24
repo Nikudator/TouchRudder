@@ -26,4 +26,5 @@ func Parse(s string) (PeerID, error) {
 }
 
 func (p PeerID) String() string { return string(p) }
-func (p PeerID) IsZero() bool   { return p == "" }
+
+func (p PeerID) IsZero() bool { return p == "" }

@@ -29,3 +29,26 @@ func TestParse(t *testing.T) {
 		})
 	}
 }
+
+func TestPeerID_IsZero(t *testing.T) {
+	if !PeerID("").IsZero() {
+		t.Error("PeerID(\"\").IsZero() = false, want true")
+	}
+	if PeerID("abc").IsZero() {
+		t.Error("PeerID(\"abc\").IsZero() = true, want false")
+	}
+}
+
+func TestPeerID_String(t *testing.T) {
+	if got := PeerID("").String(); got != "" {
+		t.Errorf("PeerID(\"\").String() = %q, want \"\"", got)
+	}
+	// roundtrip: Parse(s).String() == s
+	id, err := Parse("abc")
+	if err != nil {
+		t.Fatalf("Parse(\"abc\") unexpected error: %v", err)
+	}
+	if got := id.String(); got != "abc" {
+		t.Errorf("Parse(\"abc\").String() = %q, want \"abc\"", got)
+	}
+}
